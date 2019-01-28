@@ -10,6 +10,8 @@ const Scriptures = (function() {
   let ajax;
   let cacheBooks;
   let init;
+  let navigateHome;
+  let onHashChanged;
 
   // PRIVATE METHODS
   ajax = function(url, successCallback, failureCallback) {
@@ -40,7 +42,7 @@ const Scriptures = (function() {
       let volumeBooks = [];
       let bookId = volume.minBookId;
 
-      while (bookId <= volumeBooks.maxBookId) {
+      while (bookId <= volume.maxBookId) {
         volumeBooks.push(books[bookId]);
         bookId += 1;
       }
@@ -75,8 +77,42 @@ const Scriptures = (function() {
     });
   };
 
+  navigateHome = function(volumeId) {
+    document.getElementById("scriptures").innerHTML =
+      "<div>The Old Testament</div><div>The New Testament</div><div>The Book of Mormon</div><div>D&C</div><div>The Pearl of Great Price</div>" +
+      volumeId;
+  };
+
+  onHashChanged = function() {
+    console.log("on hash change");
+    let ids = [];
+    if (location.hash !== "" && location.hash.length > 1) {
+      ids = location.hash.substring(1).split(":");
+    }
+
+    if (ids.length <= 0) {
+      navigateHome();
+    } else if (ids.length === 1) {
+      let volumeId = Number(ids[0]);
+      if (volumeId < volumes[0].id || volumeId > volumnes.slice(-1).id) {
+        navigateHome();
+      } else {
+        navigateHome(volumeId);
+      }
+    } else if (ids.length === 2) {
+      let bookId = Number(ids[1]);
+
+      if (books[bookId] === undefined) {
+        navigateHome();
+      } else {
+        navigateHome(bookId);
+      }
+    }
+  };
+
   // PUBLIC API
   return {
-    init: init
+    init: init,
+    onHashChanged: onHashChanged
   };
 })();
