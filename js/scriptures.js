@@ -94,7 +94,7 @@ const Scriptures = (function() {
       navigateHome();
     } else if (ids.length === 1) {
       let volumeId = Number(ids[0]);
-      if (volumeId < volumes[0].id || volumeId > volumnes.slice(-1).id) {
+      if (volumeId < volumes[0].id || volumeId > volumes.slice(-1).id) {
         navigateHome();
       } else {
         navigateHome(volumeId);
