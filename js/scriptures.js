@@ -1,6 +1,24 @@
+/*
+File: scriptures.js
+Author: Kyle Gill
+Date: Winter 2019
+*/
+/*property
+    books, forEach, fullName, getElementById, gridName, hash, id, init,
+    innerHTML, length, log, maxBookId, minBookId, numChapters, onHashChanged,
+    onerror, onload, open, parentBookId, parse, push, responseText, send, slice,
+    split, status, substring
+*/
+
+/*global console*/
+/*jslint
+    browser: true
+    long: true */
+
 const Scriptures = (function() {
   "use strict";
   // CONSTANTS
+  const SCRIPTURES_URL = "https://scriptures.byu.edu/mapscrip/mapgetscrip.php";
 
   // PRIVATE VARS
   let books;
@@ -8,20 +26,35 @@ const Scriptures = (function() {
 
   // PRIVATE METHOD DECLARATIONS
   let ajax;
+  let bookChapterValid;
   let cacheBooks;
+  let encodedScriptureUrlParameters;
+  let getScriptureCallback;
+  let getScriptureFailed;
   let init;
+  let navigateBook;
+  let navigateChapter;
   let navigateHome;
+  let nextChapter;
   let onHashChanged;
+  let previousChapter;
+  let titleForBookChapter;
 
   // PRIVATE METHODS
-  ajax = function(url, successCallback, failureCallback) {
+  ajax = function(url, successCallback, failureCallback, skipParse) {
     let request = new XMLHttpRequest();
 
     request.open("GET", url, true);
 
     request.onload = function() {
       if (request.status >= 200 && request.status < 400) {
-        let data = JSON.parse(request.responseText);
+        let data;
+
+        if (skipParse) {
+          data = request.responseText;
+        } else {
+          data = JSON.parse(request.responseText);
+        }
 
         if (typeof successCallback === "function") {
           successCallback(data);
@@ -35,6 +68,20 @@ const Scriptures = (function() {
 
     request.onerror = failureCallback;
     request.send();
+  };
+
+  bookChapterValid = function(bookId, chapter) {
+    let book = books[bookId];
+
+    if (book === undefined || chapter < 0 || chapter > book.numChapters) {
+      return false;
+    }
+
+    if (chapter === 0 && book.numChapters > 0) {
+      return false;
+    }
+
+    return true;
   };
 
   cacheBooks = function(callback) {
@@ -53,6 +100,40 @@ const Scriptures = (function() {
     if (typeof callback === "function") {
       callback();
     }
+  };
+
+  encodedScriptureUrlParameters = function(bookId, chapter, verses, isJst) {
+    if (bookId !== undefined && chapter !== undefined) {
+      let options = "";
+
+      if (verses !== undefined) {
+        options += verses;
+      }
+
+      if (isJst !== undefined && isJst) {
+        options += "&jst=JST";
+      }
+
+      return (
+        SCRIPTURES_URL +
+        "?book=" +
+        bookId +
+        "&chap=" +
+        chapter +
+        "&verses=" +
+        options
+      );
+    }
+  };
+
+  getScriptureCallback = function(chapterHtml) {
+    document.getElementById("scriptures").innerHTML = chapterHtml;
+
+    // NEEDS WORK: SET UP THE MAP MARKERS
+  };
+
+  getScriptureFailed = function() {
+    console.warning("Unable to receive scripture content from server.");
   };
 
   init = function(callback) {
@@ -77,10 +158,86 @@ const Scriptures = (function() {
     });
   };
 
-  navigateHome = function(volumeId) {
+  navigateBook = function(bookId) {
     document.getElementById("scriptures").innerHTML =
-      "<div>The Old Testament</div><div>The New Testament</div><div>The Book of Mormon</div><div>D&C</div><div>The Pearl of Great Price</div>" +
-      volumeId;
+      "<div>" + bookId + "</div>";
+  };
+
+  navigateChapter = function(bookId, chapter) {
+    if (bookId !== undefined) {
+      // let book = books[bookId];
+      // let volume = volumes[book.parentBookId - 1];
+      // eventually used for breadcrumbs, but not necessary
+
+      console.log(nextChapter(bookId, chapter));
+
+      ajax(
+        encodedScriptureUrlParameters(bookId, chapter),
+        getScriptureCallback,
+        getScriptureFailed,
+        true
+      );
+    }
+  };
+
+  navigateHome = function(volumeId) {
+    let navContents = '<div id="scriptnav">';
+
+    volumes.forEach(function(volume) {
+      if (volumeId === undefined || volumeId === volume.id) {
+        // TODO clean up
+        navContents +=
+          '<div class="volume"><a name="v' +
+          '"/><h5>' +
+          volume.fullName +
+          '</h5></div><div class="books">';
+
+        volume.books.forEach(function(book) {
+          navContents +=
+            '<a class="btn" id"' +
+            book.id +
+            '" href="#' +
+            volume.id +
+            ":" +
+            book.id +
+            '">' +
+            book.gridName +
+            "</a>";
+        });
+
+        navContents += "</div>";
+      }
+    });
+
+    navContents += "<br /><br /></div>";
+
+    document.getElementById("scriptures").innerHTML = navContents;
+  };
+
+  nextChapter = function(bookId, chapter) {
+    let book = books[bookId];
+
+    if (book !== undefined) {
+      if (chapter < book.numChapters) {
+        return [bookId, chapter + 1, titleForBookChapter(book, chapter + 1)];
+      }
+
+      let nextBook = books[bookId + 1];
+
+      if (nextBook !== undefined) {
+        let nextChapterValue = 0;
+
+        if (nextBook.numChapters > 0) {
+          nextChapterValue = 1;
+        }
+
+        return [
+          nextBook.id,
+          nextChapterValue,
+          titleForBookChapter(nextBook, nextChapterValue)
+        ];
+      }
+    }
   };
 
   onHashChanged = function() {
@@ -108,6 +265,16 @@ const Scriptures = (function() {
         navigateHome(bookId);
       }
     }
+  };
+
+  previousChapter = function(bookId, chapter) {};
+
+  titleForBookChapter = function(book, chapter) {
+    if (chapter > 0) {
+      return book.tocName + " " + chapter;
+    }
+
+    return book.tocName;
   };
 
   // PUBLIC API
