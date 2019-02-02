@@ -165,11 +165,8 @@ const Scriptures = (function() {
 
   navigateChapter = function(bookId, chapter) {
     if (bookId !== undefined) {
-      // let book = books[bookId];
-      // let volume = volumes[book.parentBookId - 1];
-      // eventually used for breadcrumbs, but not necessary
-
       console.log(nextChapter(bookId, chapter));
+      console.log(previousChapter(bookId, chapter));
 
       ajax(
         encodedScriptureUrlParameters(bookId, chapter),
@@ -277,7 +274,31 @@ const Scriptures = (function() {
     }
   };
 
-  previousChapter = function(bookId, chapter) {};
+  previousChapter = function(bookId, chapter) {
+    let book = books[bookId];
+
+    if (book !== undefined) {
+      if (chapter > 1) {
+        return [bookId, chapter - 1, titleForBookChapter(book, chapter - 1)];
+      }
+
+      let prevBook = books[bookId - 1];
+
+      if (prevBook !== undefined) {
+        let prevChapterValue = 0;
+
+        if (prevBook.numChapters > 0) {
+          prevChapterValue = prevBook.numChapters;
+        }
+
+        return [
+          prevBook.id,
+          prevChapterValue,
+          titleForBookChapter(prevBook, prevChapterValue)
+        ];
+      }
+    }
+  };
 
   titleForBookChapter = function(book, chapter) {
     if (chapter > 0) {
