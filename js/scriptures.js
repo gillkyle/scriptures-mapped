@@ -18,19 +18,56 @@ Date: Winter 2019
 const Scriptures = (function() {
   "use strict";
   // CONSTANTS
-  const SCRIPTURES_URL = "https://scriptures.byu.edu/mapscrip/mapgetscrip.php";
+  const BOTTOM_PADDING = "<br /><br />";
+  const BUTTONS =
+    '<button id="prev_btn">Prev</button><button id="next_btn">Next</button>';
+  const CLASS_BOOKS = "books";
+  const CLASS_VOLUME = "volume";
+  const DIV_BREADCRUMBS = "crumbs";
+  const DIV_SCRIPTURES = "scriptures";
+  const DIV_SCRIPTURES_NAVIGATOR = "scripnav";
+  const INDEX_PLACENAME = 2;
+  const INDEX_LATITUDE = 3;
+  const INDEX_LONGITUDE = 4;
+  const INDEX_PLACE_FLAG = 11;
+  const LAT_LON_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
+  const MAX_RETRY_DELAY = 5000;
+  const REQUEST_GET = "GET";
+  const REQUEST_STATUS_OK = 200;
+  const REQUEST_STATUS_ERORR = 400;
+  const TAG_HEADER5 = "h5";
+  const TAG_LIST_ITEM = "li";
+  const TAG_UNORDERED_LIST = "ul";
+  const TEXT_TOP_LEVEL = "The Scriptures";
+  const URL_BOOKS = "https://scriptures.byu.edu/mapscrip/model/books.php";
+  const URL_SCRIPTURES = "https://scriptures.byu.edu/mapscrip/mapgetscrip.php";
+  const URL_VOLUMES = "https://scriptures.byu.edu/mapscrip/model/volumes.php";
 
   // PRIVATE VARS
   let books;
+  let gmMarkers = [];
+  let requestedBreadcrumbs;
+  let retryDelay = 500;
   let volumes;
 
   // PRIVATE METHOD DECLARATIONS
+  let addMarker;
   let ajax;
   let bookChapterValid;
+  let booksGrid;
+  let booksGridContent;
+  let breadcrumbs;
   let cacheBooks;
+  let changeHash;
+  let clearMarkers;
   let encodedScriptureUrlParameters;
   let getScriptureCallback;
   let getScriptureFailed;
+  let htmlAnchor;
+  let htmlDiv;
+  let htmlElement;
+  let htmlHashLink;
+  let htmlLink;
   let init;
   let navigateBook;
   let navigateChapter;
@@ -38,9 +75,24 @@ const Scriptures = (function() {
   let nextChapter;
   let onHashChanged;
   let previousChapter;
+  let setupMarkers;
+  let setupBounds;
   let titleForBookChapter;
+  let volumeForId;
+  let volumesGridContent;
 
   // PRIVATE METHODS
+  addMarker = function(placename, latitude, longitude) {
+    let marker = new google.maps.Marker({
+      position: { lat: latitude, lng: longitude },
+      map: map,
+      title: placename,
+      animation: google.maps.Animation.DROP
+    });
+
+    gmMarkers.push(marker);
+  };
+
   ajax = function(url, successCallback, failureCallback, skipParse) {
     let request = new XMLHttpRequest();
 
@@ -102,6 +154,14 @@ const Scriptures = (function() {
     }
   };
 
+  clearMarkers = function() {
+    gmMarkers.forEach(function(marker) {
+      marker.setMap(null);
+    });
+
+    gmMarkers = [];
+  };
+
   encodedScriptureUrlParameters = function(bookId, chapter, verses, isJst) {
     if (bookId !== undefined && chapter !== undefined) {
       let options = "";
@@ -115,7 +175,7 @@ const Scriptures = (function() {
       }
 
       return (
-        SCRIPTURES_URL +
+        URL_SCRIPTURES +
         "?book=" +
         bookId +
         "&chap=" +
@@ -128,8 +188,7 @@ const Scriptures = (function() {
 
   getScriptureCallback = function(chapterHtml) {
     document.getElementById("scriptures").innerHTML = chapterHtml;
-
-    // NEEDS WORK: SET UP THE MAP MARKERS
+    setupMarkers();
   };
 
   getScriptureFailed = function() {
@@ -298,6 +357,71 @@ const Scriptures = (function() {
         ];
       }
     }
+  };
+
+  setupBounds = function() {
+    console.log(map);
+    if (gmMarkers.length === 0) {
+      map.panTo({ lat: 31.777444, lng: 35.234935 });
+    }
+
+    if (gmMarkers.length === 1) {
+      map.panTo(gmMarkers[0].position);
+    }
+
+    if (gmMarkers.length > 1) {
+      let bounds = new google.maps.LatLngBounds();
+
+      gmMarkers.forEach(function(marker) {
+        bounds.extend(marker.getPosition());
+      });
+
+      map.fitBounds(bounds);
+      // The code above was adapted by code from: https://stackoverflow.com/questions/19304574/center-set-zoom-of-map-to-cover-all-visible-markers
+      // Submitted by user: https://stackoverflow.com/users/954940/adam
+    }
+
+    map.setZoom(8);
+  };
+
+  setupMarkers = function() {
+    if (window.google === undefined) {
+      // retry finding the global google object after delay
+      let retryId = window.setTimeout(setupMarkers, retryDelay);
+
+      retryDelay += retryDelay;
+
+      if (retryDelay > MAX_RETRY_DELAY) {
+        window.clearTimeout(retryId);
+      }
+
+      return;
+    }
+
+    if (gmMarkers.length > 0) {
+      clearMarkers();
+    }
+
+    document
+      .querySelectorAll('a[onclick^="showLocation("]')
+      .forEach(function(element) {
+        let matches = LAT_LON_PARSER.exec(element.getAttribute("onclick"));
+
+        if (matches) {
+          let placename = matches[INDEX_PLACENAME];
+          let latitude = parseFloat(matches[INDEX_LATITUDE]);
+          let longitude = parseFloat(matches[INDEX_LONGITUDE]);
+          let flag = matches[INDEX_PLACE_FLAG];
+
+          if (flag !== "") {
+            placename += " " + flag;
+          }
+
+          addMarker(placename, latitude, longitude);
+        }
+      });
+
+    setupBounds();
   };
 
   titleForBookChapter = function(book, chapter) {

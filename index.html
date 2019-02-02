@@ -32,6 +32,15 @@
     </div>
 
     <script type="text/javascript">
+      let map;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 31.777444, lng: 35.234935 },
+          zoom: 8
+        });
+      }
+
       function ready(eventHandler) {
         "use strict";
 
@@ -54,5 +63,10 @@
         });
       });
     </script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9XbtaifahF3WNMGrIzkqEHlIy3FwHMro&callback=initMap"
+      async
+      defer
+    ></script>
   </body>
 </html>
