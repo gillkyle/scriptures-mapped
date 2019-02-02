@@ -4,7 +4,7 @@ Author: Kyle Gill
 Date: Winter 2019
 */
 /*property
-    books, forEach, fullName, getElementById, gridName, hash, id, init,
+    books, bookChapterValid, forEach, fullName, getElementById, gridName, hash, id, init,
     innerHTML, length, log, maxBookId, minBookId, numChapters, onHashChanged,
     onerror, onload, open, parentBookId, parse, push, responseText, send, slice,
     split, status, substring
@@ -241,8 +241,8 @@ const Scriptures = (function() {
   };
 
   onHashChanged = function() {
-    console.log("on hash change");
     let ids = [];
+
     if (location.hash !== "" && location.hash.length > 1) {
       ids = location.hash.substring(1).split(":");
     }
@@ -256,13 +256,23 @@ const Scriptures = (function() {
       } else {
         navigateHome(volumeId);
       }
-    } else if (ids.length === 2) {
+    } else if (ids.length >= 2) {
       let bookId = Number(ids[1]);
 
       if (books[bookId] === undefined) {
         navigateHome();
       } else {
-        navigateHome(bookId);
+        if (ids.length === 2) {
+          navigateBook(bookId);
+        } else {
+          let chapter = Number(ids[2]);
+
+          if (bookChapterValid(bookId, chapter)) {
+            navigateChapter(bookId, chapter);
+          } else {
+            navigateHome();
+          }
+        }
       }
     }
   };
