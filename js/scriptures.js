@@ -32,7 +32,6 @@ const Scriptures = (function() {
   const INDEX_PLACE_FLAG = 11;
   const LAT_LON_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
   const MAX_RETRY_DELAY = 5000;
-  const REQUEST_GET = "GET";
   const REQUEST_STATUS_OK = 200;
   const REQUEST_STATUS_ERORR = 400;
   const TAG_HEADER5 = "h5";
@@ -99,7 +98,10 @@ const Scriptures = (function() {
     request.open("GET", url, true);
 
     request.onload = function() {
-      if (request.status >= 200 && request.status < 400) {
+      if (
+        request.status >= REQUEST_STATUS_OK &&
+        request.status < REQUEST_STATUS_ERORR
+      ) {
         let data;
 
         if (skipParse) {
@@ -136,6 +138,59 @@ const Scriptures = (function() {
     return true;
   };
 
+  booksGrid = function(volume) {
+    return htmlDiv({
+      classKey: CLASS_BOOKS,
+      content: booksGridContent(volume)
+    });
+  };
+
+  booksGridContent = function(volume) {
+    let gridContent = "";
+
+    volume.books.forEach(function(book) {
+      gridContent += htmlLink({
+        classKey: "btn",
+        id: book.id,
+        href: `#${volume.id}:${book.id}`,
+        content: book.gridName
+      });
+    });
+
+    return gridContent;
+  };
+
+  breadcrumbs = function(volume, book, chapter) {
+    let crumbs;
+
+    if (volume === undefined) {
+      crumbs = htmlElement(TAG_LIST_ITEM, TEXT_TOP_LEVEL);
+    } else {
+      crumbs = htmlElement(TAG_LIST_ITEM, htmlHashLink("", TEXT_TOP_LEVEL));
+
+      if (book === undefined) {
+        crumbs += htmlElement(TAG_LIST_ITEM, volume.fullName);
+      } else {
+        crumbs += htmlElement(
+          TAG_LIST_ITEM,
+          htmlHashLink(`${volume.id}`, volume.fullName)
+        );
+
+        if (chapter === undefined || chapter <= 0) {
+          crumbs += htmlElement(TAG_LIST_ITEM, book.tocName);
+        } else {
+          crumbs += htmlElement(
+            TAG_LIST_ITEM,
+            htmlHashLink(`${volume.id},${book.id}`, book.tocName)
+          );
+          crumbs += htmlElement(TAG_LIST_ITEM, chapter);
+        }
+      }
+    }
+
+    return htmlElement(TAG_UNORDERED_LIST, crumbs);
+  };
+
   cacheBooks = function(callback) {
     volumes.forEach(volume => {
       let volumeBooks = [];
@@ -152,6 +207,23 @@ const Scriptures = (function() {
     if (typeof callback === "function") {
       callback();
     }
+  };
+
+  changeHash = function(volumeId, bookId, chapter) {
+    let newHash = "";
+
+    if (volumeId !== undefined) {
+      newHash += volumeId;
+
+      if (bookId !== undefined) {
+        newHash += `:${bookId}`;
+
+        if (chapter !== undefined) {
+          newHash += `:${chapter}`;
+        }
+      }
+    }
+    location.hash = newHash;
   };
 
   clearMarkers = function() {
@@ -174,20 +246,13 @@ const Scriptures = (function() {
         options += "&jst=JST";
       }
 
-      return (
-        URL_SCRIPTURES +
-        "?book=" +
-        bookId +
-        "&chap=" +
-        chapter +
-        "&verses=" +
-        options
-      );
+      return `${URL_SCRIPTURES}?book=${bookId}&chap=${chapter}&verses=${options}`;
     }
   };
 
   getScriptureCallback = function(chapterHtml) {
-    document.getElementById("scriptures").innerHTML = chapterHtml;
+    document.getElementById(DIV_SCRIPTURES).innerHTML = chapterHtml;
+    document.getElementById(DIV_BREADCRUMBS).innerHTML = requestedBreadcrumbs;
     setupMarkers();
   };
 
@@ -195,11 +260,68 @@ const Scriptures = (function() {
     console.warning("Unable to receive scripture content from server.");
   };
 
+  htmlAnchor = function(volume) {
+    return `<a name="v${volume.id}" />`;
+  };
+
+  htmlDiv = function(parameters) {
+    let classString = "";
+    let contentString = "";
+    let idString = "";
+
+    if (parameters.classKey !== undefined) {
+      classString = ` class="${parameters.classKey}"`;
+    }
+
+    if (parameters.content !== undefined) {
+      contentString = parameters.content;
+    }
+
+    if (parameters.id !== undefined) {
+      idString = ` id="${parameters.id}"`;
+    }
+
+    return `<div${idString}${classString}>${contentString}</div>`;
+  };
+
+  htmlElement = function(tagName, content) {
+    return `<${tagName}>${content}</${tagName}>`;
+  };
+
+  htmlHashLink = function(hashArguments, content) {
+    return `<a href="javascript:void(0)" onclick="Scriptures.changeHash(${hashArguments})">${content}</a>`;
+  };
+
+  htmlLink = function(parameters) {
+    let classString = "";
+    let contentString = "";
+    let hrefString = "";
+    let idString = "";
+
+    if (parameters.classKey !== undefined) {
+      classString = ` class="${parameters.classKey}"`;
+    }
+
+    if (parameters.content !== undefined) {
+      contentString = parameters.content;
+    }
+
+    if (parameters.href !== undefined) {
+      hrefString = ` href="${parameters.href}"`;
+    }
+
+    if (parameters.id !== undefined) {
+      idString = ` id="${parameters.id}"`;
+    }
+
+    return `<a${idString}${classString}${hrefString}>${contentString}</a>`;
+  };
+
   init = function(callback) {
     let booksLoaded = false;
     let volumesLoaded = false;
 
-    ajax("https://scriptures.byu.edu/mapscrip/model/books.php", data => {
+    ajax(URL_BOOKS, data => {
       books = data;
       booksLoaded = true;
 
@@ -207,7 +329,7 @@ const Scriptures = (function() {
         cacheBooks(callback);
       }
     });
-    ajax("https://scriptures.byu.edu/mapscrip/model/volumes.php", data => {
+    ajax(URL_VOLUMES, data => {
       volumes = data;
       volumesLoaded = true;
 
@@ -218,12 +340,30 @@ const Scriptures = (function() {
   };
 
   navigateBook = function(bookId) {
-    document.getElementById("scriptures").innerHTML =
-      "<div>" + bookId + "</div>";
+    // TODO build this whole thing
+    let book = books[bookId];
+    let volume;
+
+    if (book !== undefined) {
+      volume = volumeForId(book.parentBookId);
+    }
+    document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+      content: bookId
+    });
+    document.getElementById(DIV_BREADCRUMBS).innerHTML = breadcrumbs(
+      volume,
+      book
+    );
   };
 
   navigateChapter = function(bookId, chapter) {
+    // TODO add event listeners for next and prev
     if (bookId !== undefined) {
+      let book = books[bookId];
+      let volume = volumes[book.parentBookId - 1];
+
+      requestedBreadcrumbs = breadcrumbs(volume, book, chapter);
+
       console.log(nextChapter(bookId, chapter));
       console.log(previousChapter(bookId, chapter));
 
@@ -237,37 +377,16 @@ const Scriptures = (function() {
   };
 
   navigateHome = function(volumeId) {
-    let navContents = '<div id="scriptnav">';
-
-    volumes.forEach(function(volume) {
-      if (volumeId === undefined || volumeId === volume.id) {
-        // TODO clean up
-        navContents +=
-          '<div class="volume"><a name="v' +
-          '"/><h5>' +
-          volume.fullName +
-          '</h5></div><div class="books">';
-
-        volume.books.forEach(function(book) {
-          navContents +=
-            '<a class="btn" id"' +
-            book.id +
-            '" href="#' +
-            volume.id +
-            ":" +
-            book.id +
-            '">' +
-            book.gridName +
-            "</a>";
-        });
-
-        navContents += "</div>";
-      }
+    document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+      id: DIV_SCRIPTURES_NAVIGATOR,
+      content: volumesGridContent(volumeId)
     });
 
-    navContents += "<br /><br /></div>";
+    document.getElementById(DIV_BREADCRUMBS).innerHTML = breadcrumbs(
+      volumeForId(volumeId)
+    );
 
-    document.getElementById("scriptures").innerHTML = navContents;
+    document.getElementById("navButtons").innerHTML = "";
   };
 
   nextChapter = function(bookId, chapter) {
@@ -360,7 +479,6 @@ const Scriptures = (function() {
   };
 
   setupBounds = function() {
-    console.log(map);
     if (gmMarkers.length === 0) {
       map.panTo({ lat: 31.777444, lng: 35.234935 });
     }
@@ -432,8 +550,32 @@ const Scriptures = (function() {
     return book.tocName;
   };
 
+  volumeForId = function(volumeId) {
+    if (volumeId !== undefined && volumeId > 0 && volumeId < volumes.length) {
+      return volumes[volumeId - 1];
+    }
+  };
+
+  volumesGridContent = function(volumeId) {
+    let gridContent = "";
+
+    volumes.forEach(function(volume) {
+      if (volumeId === undefined || volumeId === volume.id) {
+        gridContent += htmlDiv({
+          classKey: CLASS_VOLUME,
+          content:
+            htmlAnchor(volume) + htmlElement(TAG_HEADER5, volume.fullName)
+        });
+
+        gridContent += booksGrid(volume);
+      }
+    });
+    return gridContent + BOTTOM_PADDING;
+  };
+
   // PUBLIC API
   return {
+    changeHash: changeHash,
     init: init,
     onHashChanged: onHashChanged
   };
