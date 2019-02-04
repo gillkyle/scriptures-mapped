@@ -46,6 +46,14 @@ img {
   align-content: stretch;
 }
 
+#crumbs > ul {
+  display: flex;
+  list-style-type: none;
+}
+#crumbs > ul > li:before {
+  content: ">";
+  padding: 0.3em;
+}
 #crumb {
   padding-left: 1.25em;
   order: -1;
