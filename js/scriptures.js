@@ -18,7 +18,6 @@ Date: Winter 2019
 const Scriptures = (function() {
   "use strict";
   // CONSTANTS
-  const BOTTOM_PADDING = "<br /><br />";
   const CLASS_BOOKS = "books";
   const CLASS_VOLUME = "volume";
   const DIV_BREADCRUMBS = "crumbs";
@@ -85,6 +84,7 @@ const Scriptures = (function() {
       position: { lat: latitude, lng: longitude },
       map: map,
       title: placename,
+      label: placename,
       animation: google.maps.Animation.DROP
     });
 
@@ -561,6 +561,8 @@ const Scriptures = (function() {
         let matches = LAT_LON_PARSER.exec(element.getAttribute("onclick"));
 
         if (matches) {
+          // TODO verify not placing multiple pins
+          console.log(matches);
           let placename = matches[INDEX_PLACENAME];
           let latitude = parseFloat(matches[INDEX_LATITUDE]);
           let longitude = parseFloat(matches[INDEX_LONGITUDE]);
@@ -638,7 +640,7 @@ const Scriptures = (function() {
         gridContent += booksGrid(volume);
       }
     });
-    return gridContent + BOTTOM_PADDING;
+    return gridContent;
   };
 
   // PUBLIC API
