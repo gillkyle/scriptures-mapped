@@ -339,16 +339,17 @@ const Scriptures = (function() {
   };
 
   navigateBook = function(bookId) {
-    // TODO build this whole thing
     let book = books[bookId];
     let volume;
 
     if (book !== undefined) {
-      volume = volumeForId(book.parentBookId);
+      volume = volumes[book.parentBookId - 1];
 
-      if (book.numChapters === 0) navigateChapter(bookId, 0);
-      else if (book.numChapters === 1) navigateChapter(bookId, 1);
-      else {
+      if (book.numChapters === 0) {
+        navigateChapter(bookId, 0);
+      } else if (book.numChapters === 1) {
+        navigateChapter(bookId, 1);
+      } else {
         let gridContent = `<div class=${CLASS_VOLUME}><${TAG_HEADER5}>${
           book.fullName
         }</${TAG_HEADER5}></div><div class=${CLASS_BOOKS}>`;
@@ -557,8 +558,8 @@ const Scriptures = (function() {
 
     document
       .querySelectorAll('a[onclick^="showLocation("]')
-      .forEach(function(element) {
-        let matches = LAT_LON_PARSER.exec(element.getAttribute("onclick"));
+      .forEach(function(el) {
+        let matches = LAT_LON_PARSER.exec(el.getAttribute("onclick"));
 
         if (matches) {
           // TODO verify not placing multiple pins
@@ -591,15 +592,14 @@ const Scriptures = (function() {
     viewAltitude,
     viewHeading
   ) {
-    gmMarkers.forEach(function(marker) {
-      let myLatLng = new google.maps.LatLng(latitude, longitude);
+    let myLatLng = new google.maps.LatLng(latitude, longitude);
 
+    gmMarkers.forEach(function(marker) {
       if (
         marker.position.lat() === myLatLng.lat() &&
         marker.position.lng() === myLatLng.lng()
       ) {
         let zoom = Math.round(Number(viewAltitude) / 450);
-
         if (zoom < 6) {
           zoom = 6;
         } else if (zoom > 18) {
@@ -613,7 +613,7 @@ const Scriptures = (function() {
   };
 
   titleForBookChapter = function(book, chapter) {
-    if (chapter > 0) {
+    if (chapter) {
       return book.tocName + " " + chapter;
     }
 
