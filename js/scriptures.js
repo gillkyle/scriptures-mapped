@@ -389,7 +389,7 @@ const Scriptures = (function() {
 
       requestedBreadcrumbs = breadcrumbs(volume, book, chapter);
 
-      document.getElementById("buttons").style.display = "block";
+      document.getElementById("buttons").style.display = "flex";
 
       document.getElementById("prev-btn").addEventListener("click", function() {
         let [v, b, c] = previousChapter(bookId, chapter);
