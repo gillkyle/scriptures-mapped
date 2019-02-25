@@ -165,7 +165,11 @@ const Scriptures = (function() {
     if (volume === undefined) {
       crumbs = htmlElement(TAG_LIST_ITEM, TEXT_TOP_LEVEL);
     } else {
-      crumbs = htmlElement(TAG_LIST_ITEM, htmlHashLink("", TEXT_TOP_LEVEL));
+      crumbs = htmlElement(
+        TAG_LIST_ITEM,
+        htmlHashLink("", TEXT_TOP_LEVEL),
+        "scrips"
+      );
 
       if (book === undefined) {
         crumbs += htmlElement(TAG_LIST_ITEM, volume.fullName);
@@ -187,7 +191,7 @@ const Scriptures = (function() {
       }
     }
 
-    return htmlElement(TAG_UNORDERED_LIST, crumbs);
+    return htmlElement(TAG_UNORDERED_LIST, crumbs, "bread");
   };
 
   cacheBooks = function(callback) {
@@ -283,8 +287,10 @@ const Scriptures = (function() {
     return `<div${idString}${classString}>${contentString}</div>`;
   };
 
-  htmlElement = function(tagName, content) {
-    return `<${tagName}>${content}</${tagName}>`;
+  htmlElement = function(tagName, content, className) {
+    return `<${tagName} ${
+      className ? `class=${className}` : ""
+    } >${content}</${tagName}>`;
   };
 
   htmlHashLink = function(hashArguments, content) {

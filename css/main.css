@@ -54,6 +54,9 @@ img {
   content: ">";
   padding: 0.3em;
 }
+.scrips:before {
+  content: none !important;
+}
 #crumb {
   padding-left: 1.25em;
   order: -1;
