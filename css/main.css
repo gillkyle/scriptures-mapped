@@ -30,7 +30,8 @@ img {
   grid-template-areas: "crumbs title";
   flex-direction: row;
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
-  justify-items: center;
+  justify-items: flex-start;
+  padding-left: 20px;
   align-items: center;
   z-index: 10000;
 }
@@ -38,6 +39,7 @@ img {
   #header {
     grid-template-areas: "title" "crumbs";
     grid-template-rows: auto auto;
+    justify-items: center;
   }
 }
 

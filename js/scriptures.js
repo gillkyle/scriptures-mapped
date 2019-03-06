@@ -398,6 +398,8 @@ const Scriptures = (function() {
       requestedBreadcrumbs = breadcrumbs(volume, book, chapter);
 
       document.getElementById("buttons").style.display = "flex";
+      document.getElementById("prev-btn").setAttribute("disabled", "disabled");
+      document.getElementById("next-btn").setAttribute("disabled", "disabled");
 
       document.getElementById("prev-btn").addEventListener(
         "click",
@@ -405,8 +407,6 @@ const Scriptures = (function() {
           let [v, b, c] = previousChapter(bookId, chapter);
 
           const left = $("#left-pane").first();
-          const middle = $("#scriptures").first();
-          const right = $("#right-pane").first();
           ajax(
             encodedScriptureUrlParameters(b, c),
             getLeftCallback,
@@ -439,8 +439,6 @@ const Scriptures = (function() {
         function() {
           let [v, b, c] = nextChapter(bookId, chapter);
 
-          const left = $("#left-pane").first();
-          const middle = $("#scriptures").first();
           const right = $("#right-pane").first();
           ajax(
             encodedScriptureUrlParameters(b, c),
@@ -470,6 +468,8 @@ const Scriptures = (function() {
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
+      document.getElementById("prev-btn").removeAttribute("disabled");
+      document.getElementById("next-btn").removeAttribute("disabled");
 
       ajax(
         encodedScriptureUrlParameters(bookId, chapter),
