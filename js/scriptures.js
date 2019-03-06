@@ -399,65 +399,75 @@ const Scriptures = (function() {
 
       document.getElementById("buttons").style.display = "flex";
 
-      document.getElementById("prev-btn").addEventListener("click", function() {
-        let [v, b, c] = previousChapter(bookId, chapter);
+      document.getElementById("prev-btn").addEventListener(
+        "click",
+        function() {
+          let [v, b, c] = previousChapter(bookId, chapter);
 
-        const left = $("#left-pane").first();
-        const middle = $("#scriptures").first();
-        const right = $("#right-pane").first();
-        ajax(
-          encodedScriptureUrlParameters(b, c),
-          getLeftCallback,
-          getScriptureFailed,
-          true
-        );
-        left
-          .css({ left: "-320px", transition: "0s all ease-in" })
-          .show()
-          .css({
-            left: "0px",
-            transition: "300ms all ease-in"
-          })
-          .delay(500)
-          .fadeOut();
+          const left = $("#left-pane").first();
+          const middle = $("#scriptures").first();
+          const right = $("#right-pane").first();
+          ajax(
+            encodedScriptureUrlParameters(b, c),
+            getLeftCallback,
+            getScriptureFailed,
+            true
+          );
+          left
+            .css({ left: "-320px", transition: "0s all ease-in" })
+            .show()
+            .css({
+              left: "0px",
+              transition: "300ms all ease-in"
+            })
+            .delay(500)
+            .fadeOut();
+          document.getElementById("left-pane").innerHTML = "";
 
-        if (v !== undefined) {
-          changeHash(v, b, c);
-        } else {
-          changeHash(undefined);
-          navigateHome();
-        }
-      });
+          if (v !== undefined) {
+            changeHash(v, b, c);
+          } else {
+            changeHash(undefined);
+            navigateHome();
+          }
+        },
+        { once: true }
+      );
 
-      document.getElementById("next-btn").addEventListener("click", function() {
-        let [v, b, c] = nextChapter(bookId, chapter);
+      document.getElementById("next-btn").addEventListener(
+        "click",
+        function() {
+          let [v, b, c] = nextChapter(bookId, chapter);
 
-        const left = $("#left-pane").first();
-        const middle = $("#scriptures").first();
-        const right = $("#right-pane").first();
-        ajax(
-          encodedScriptureUrlParameters(b, c),
-          getRightCallback,
-          getScriptureFailed,
-          true
-        );
-        right
-          .css({ left: "320px", transition: "0s all ease-in" })
-          .show()
-          .css({
-            left: "0px",
-            transition: "300ms all ease-in"
-          })
-          .delay(500)
-          .fadeOut();
+          const left = $("#left-pane").first();
+          const middle = $("#scriptures").first();
+          const right = $("#right-pane").first();
+          ajax(
+            encodedScriptureUrlParameters(b, c),
+            getRightCallback,
+            getScriptureFailed,
+            true
+          );
+          right
+            .css({ left: "320px", transition: "0s all ease-in" })
+            .show()
+            .css({
+              left: "0px",
+              transition: "300ms all ease-in"
+            })
+            .delay(500)
+            .fadeOut();
+          document.getElementById("right-pane").innerHTML = "";
 
-        if (v !== undefined) {
-          changeHash(v, b, c);
-        } else {
-          changeHash(undefined);
-          navigateHome();
-        }
-      });
+          if (v !== undefined) {
+            changeHash(v, b, c);
+          } else {
+            changeHash(undefined);
+            navigateHome();
+          }
+        },
+        { once: true }
+      );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -611,7 +621,7 @@ const Scriptures = (function() {
     }
 
     document
-      .querySelectorAll('a[onclick^="showLocation("]')
+      .querySelectorAll('#scrip-pane a[onclick^="showLocation("]')
       .forEach(function(el) {
         let matches = LAT_LON_PARSER.exec(el.getAttribute("onclick"));
 
