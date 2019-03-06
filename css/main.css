@@ -124,6 +124,11 @@ div.subtitle {
   width: 320px;
   height: 100%;
 }
+@media (max-width: 400px) {
+  .pane {
+    border-right: none !important;
+  }
+}
 #scrip-pane {
   grid-area: nav;
   border-right: 1px solid #ddd;
