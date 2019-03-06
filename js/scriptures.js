@@ -77,6 +77,7 @@ const Scriptures = (function() {
   let setupBounds;
   let showLocation;
   let titleForBookChapter;
+  let transitioning = false;
   let volumeForId;
   let volumesGridContent;
 
@@ -256,7 +257,11 @@ const Scriptures = (function() {
   };
 
   getScriptureCallback = function(chapterHtml) {
-    document.getElementById(DIV_SCRIPTURES).innerHTML = chapterHtml;
+    // document.getElementById(DIV_SCRIPTURES).innerHTML = chapterHtml;
+    const scrips = $("#scriptures");
+    scrips.hide();
+    scrips[0].innerHTML = chapterHtml;
+    scrips.fadeIn(150);
     document.getElementById(DIV_BREADCRUMBS).innerHTML = requestedBreadcrumbs;
     setupMarkers();
   };
@@ -378,9 +383,12 @@ const Scriptures = (function() {
         }
 
         gridContent += `</div>`;
-        document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+        const scrips = $("#scriptures");
+        scrips.hide();
+        scrips[0].innerHTML = htmlDiv({
           content: gridContent
         });
+        scrips.fadeIn();
       }
     }
     document.getElementById(DIV_BREADCRUMBS).innerHTML = breadcrumbs(
@@ -398,16 +406,16 @@ const Scriptures = (function() {
       requestedBreadcrumbs = breadcrumbs(volume, book, chapter);
 
       document.getElementById("buttons").style.display = "flex";
-      document.getElementById("prev-btn").setAttribute("disabled", "disabled");
-      document.getElementById("next-btn").setAttribute("disabled", "disabled");
+      // document.getElementById("prev-btn").setAttribute("disabled", "disabled");
+      // document.getElementById("next-btn").setAttribute("disabled", "disabled");
+      $("#button-cover").show();
 
       document.getElementById("prev-btn").addEventListener(
         "click",
-        function() {
+        async function() {
           let [v, b, c] = previousChapter(bookId, chapter);
-
           const left = $("#left-pane").first();
-          ajax(
+          await ajax(
             encodedScriptureUrlParameters(b, c),
             getLeftCallback,
             getScriptureFailed,
@@ -436,11 +444,11 @@ const Scriptures = (function() {
 
       document.getElementById("next-btn").addEventListener(
         "click",
-        function() {
+        async function() {
           let [v, b, c] = nextChapter(bookId, chapter);
 
           const right = $("#right-pane").first();
-          ajax(
+          await ajax(
             encodedScriptureUrlParameters(b, c),
             getRightCallback,
             getScriptureFailed,
@@ -470,8 +478,9 @@ const Scriptures = (function() {
       await new Promise(resolve => setTimeout(resolve, 500));
       document.getElementById("prev-btn").removeAttribute("disabled");
       document.getElementById("next-btn").removeAttribute("disabled");
-
-      ajax(
+      // transitioning = false;
+      $("#button-cover").hide();
+      await ajax(
         encodedScriptureUrlParameters(bookId, chapter),
         getScriptureCallback,
         getScriptureFailed,
@@ -481,10 +490,13 @@ const Scriptures = (function() {
   };
 
   navigateHome = function(volumeId) {
-    document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+    const scrips = $("#scriptures");
+    scrips.hide();
+    scrips[0].innerHTML = htmlDiv({
       id: DIV_SCRIPTURES_NAVIGATOR,
       content: volumesGridContent(volumeId)
     });
+    scrips.fadeIn();
 
     document.getElementById(DIV_BREADCRUMBS).innerHTML = breadcrumbs(
       volumeForId(volumeId)
