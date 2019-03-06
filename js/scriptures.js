@@ -58,6 +58,8 @@ const Scriptures = (function() {
   let clearMarkers;
   let encodedScriptureUrlParameters;
   let getScriptureCallback;
+  let getLeftCallback;
+  let getRightCallback;
   let getScriptureFailed;
   let htmlAnchor;
   let htmlDiv;
@@ -258,6 +260,12 @@ const Scriptures = (function() {
     document.getElementById(DIV_BREADCRUMBS).innerHTML = requestedBreadcrumbs;
     setupMarkers();
   };
+  getLeftCallback = function(chapterHtml) {
+    document.getElementById("left-pane").innerHTML = chapterHtml;
+  };
+  getRightCallback = function(chapterHtml) {
+    document.getElementById("right-pane").innerHTML = chapterHtml;
+  };
 
   getScriptureFailed = function() {
     console.warning("Unable to receive scripture content from server.");
@@ -382,7 +390,7 @@ const Scriptures = (function() {
     document.getElementById("buttons").style.display = "none";
   };
 
-  navigateChapter = function(bookId, chapter) {
+  navigateChapter = async function(bookId, chapter) {
     if (bookId !== undefined) {
       let book = books[bookId];
       let volume = volumes[book.parentBookId - 1];
@@ -393,6 +401,25 @@ const Scriptures = (function() {
 
       document.getElementById("prev-btn").addEventListener("click", function() {
         let [v, b, c] = previousChapter(bookId, chapter);
+
+        const left = $("#left-pane").first();
+        const middle = $("#scriptures").first();
+        const right = $("#right-pane").first();
+        ajax(
+          encodedScriptureUrlParameters(b, c),
+          getLeftCallback,
+          getScriptureFailed,
+          true
+        );
+        left
+          .css({ left: "-320px", transition: "0s all ease-in" })
+          .show()
+          .css({
+            left: "0px",
+            transition: "300ms all ease-in"
+          })
+          .delay(500)
+          .fadeOut();
 
         if (v !== undefined) {
           changeHash(v, b, c);
@@ -405,6 +432,25 @@ const Scriptures = (function() {
       document.getElementById("next-btn").addEventListener("click", function() {
         let [v, b, c] = nextChapter(bookId, chapter);
 
+        const left = $("#left-pane").first();
+        const middle = $("#scriptures").first();
+        const right = $("#right-pane").first();
+        ajax(
+          encodedScriptureUrlParameters(b, c),
+          getRightCallback,
+          getScriptureFailed,
+          true
+        );
+        right
+          .css({ left: "320px", transition: "0s all ease-in" })
+          .show()
+          .css({
+            left: "0px",
+            transition: "300ms all ease-in"
+          })
+          .delay(500)
+          .fadeOut();
+
         if (v !== undefined) {
           changeHash(v, b, c);
         } else {
@@ -412,6 +458,8 @@ const Scriptures = (function() {
           navigateHome();
         }
       });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       ajax(
         encodedScriptureUrlParameters(bookId, chapter),
@@ -541,7 +589,7 @@ const Scriptures = (function() {
       // Submitted by user: https://stackoverflow.com/users/954940/adam
     }
 
-    map.setZoom(8);
+    map.setZoom(7);
   };
 
   setupMarkers = function() {
@@ -569,7 +617,6 @@ const Scriptures = (function() {
 
         if (matches) {
           // TODO verify not placing multiple pins
-          console.log(matches);
           let placename = matches[INDEX_PLACENAME];
           let latitude = parseFloat(matches[INDEX_LATITUDE]);
           let longitude = parseFloat(matches[INDEX_LONGITUDE]);

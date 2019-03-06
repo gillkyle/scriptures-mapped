@@ -115,12 +115,25 @@ div.subtitle {
 #scriptures {
   height: 100%;
   overflow-x: hidden;
+  z-index: -5;
 }
-#left-pane {
+.pane {
+  transition: 0.3s all ease-in;
+  width: 320px;
+  height: 100%;
+}
+#scrip-pane {
   grid-area: nav;
   border-right: 1px solid #ddd;
 }
-
+#left-pane {
+  position: absolute;
+  left: -320px;
+}
+#right-pane {
+  position: absolute;
+  left: 320px;
+}
 #scripnav {
   position: absolute;
   max-height: 100%;
@@ -262,6 +275,16 @@ div.navheading {
   padding-bottom: 2em;
   font-size: 13pt;
 }
+.pane ul.versesblock {
+  margin: 0;
+  line-height: auto;
+  list-style: none;
+  padding: 1em;
+  padding-left: 1.5em;
+  padding-right: 1.5em;
+  padding-bottom: 2em;
+  font-size: 13pt;
+}
 
 ul.versesblock li {
   margin-bottom: 0.3em;
@@ -317,6 +340,7 @@ li.match {
   justify-content: space-between;
   bottom: 0;
   width: 299px;
+  z-index: 5;
 }
 #buttons > button {
   padding: 5px 10px;
